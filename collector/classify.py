@@ -74,7 +74,10 @@ def variant_of(t):
     return "Base"
 
 
-def classify(title, expected_code=None):
+def classify(title, expected_code=None, allowed=None):
+    """allowed: variants this card really has (from the official card list). A title that names a
+    variant the card never had (e.g. "SP" meaning Slightly Played on a card with no SP printing)
+    falls back to Alt Art when the title also says so, else Base."""
     if not title:
         return None
     t = " ".join(title.split())
@@ -110,4 +113,8 @@ def classify(title, expected_code=None):
         return None
     lang = "JP" if jp else "EN"         # eBay US listings without a marker are almost always English
 
-    return {"code": code, "lang": lang, "grader": grader, "grade": grade, "black": black, "variant": variant_of(t)}
+    variant = variant_of(t)
+    if allowed is not None and variant not in allowed:
+        alt = re.search(r"\balt(ernate|ernative)?\.?\s?art\b|\bparallel\b|\baa\b|パラレル", t, re.I)
+        variant = "Alt Art" if alt and "Alt Art" in allowed else "Base"
+    return {"code": code, "lang": lang, "grader": grader, "grade": grade, "black": black, "variant": variant}

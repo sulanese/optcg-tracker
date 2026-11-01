@@ -36,12 +36,19 @@ def save_json(path, data):
 
 
 def catalogue_codes():
-    weight = {}
+    """Refresh weight per card code, and the variants each code really has."""
+    weight, allowed = {}, {}
     with open(P("data", "catalogue", "cards.csv"), encoding="utf-8") as f:
         for r in csv.DictReader(f):
+            code = r["card_code"]
             w = 3 if (r["variant"] != "Base" or r["rarity"] in HIGH) else 1
-            weight[r["card_code"]] = max(weight.get(r["card_code"], 1), w)
-    return weight
+            weight[code] = max(weight.get(code, 1), w)
+            a = allowed.setdefault(code, {"Base", "Pre-Release"})
+            if r["variant"].startswith(("Parallel", "Reprint")):
+                a.update({"Alt Art", "Manga", "Gold", "Treasure"})
+            if r["variant"] == "SP":
+                a.add("SP")
+    return weight, allowed
 
 
 def pick(weight, state, n, now):
@@ -87,7 +94,7 @@ def main():
         sys.exit("Set EBAY_CLIENT_ID and EBAY_CLIENT_SECRET (GitHub: Settings > Secrets and variables > Actions).")
 
     now = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
-    weight = catalogue_codes()
+    weight, allowed = catalogue_codes()
     state = load_json(P("data", "state", "last_fetched.json"), {})
     codes = args.codes.split(",") if args.codes else pick(weight, state, CARDS_PER_RUN, now)
     asks = load_json(P("data", "asks", "latest.json"), {})
@@ -99,7 +106,7 @@ def main():
             # lowest asks per (variant, lang, grade bucket)
             groups = {}
             for it in eb.active(code):
-                c = classify(it["title"], expected_code=code)
+                c = classify(it["title"], expected_code=code, allowed=allowed.get(code))
                 if not c or it["currency"] != "USD" or it["price"] <= 0:
                     continue
                 bucket = "raw" if not c["grader"] else f'{c["grader"]}{c["grade"]:g}'
@@ -114,7 +121,7 @@ def main():
 
             sold = eb.sold(code)
             for it in sold or []:
-                c = classify(it["title"], expected_code=code)
+                c = classify(it["title"], expected_code=code, allowed=allowed.get(code))
                 if not c or it["currency"] != "USD" or not it["sold_at"]:
                     continue
                 key = f'{it["item_id"]}|{it["sold_at"][:16]}|{it["price"]}'

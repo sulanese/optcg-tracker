@@ -44,10 +44,20 @@ def test_cases():
     assert not bad, "\n".join(map(str, bad))
 
 
+def test_allowed_variants():
+    base_only = {"Base", "Pre-Release"}
+    assert classify("Sabo OP13-004 SP Leader 5000 EN", allowed=base_only)["variant"] == "Base"
+    assert classify("Usopp ST01-002 Promo Manga FILM RED", allowed=base_only)["variant"] == "Base"
+    par = {"Base", "Pre-Release", "Alt Art", "Manga", "Gold", "Treasure"}
+    assert classify("Bonney OP13-108 Alternate Art SP", allowed=par)["variant"] == "Alt Art"
+    assert classify("Luffy OP05-119 Manga Rare", allowed=par)["variant"] == "Manga"
+    assert classify("Okiku OP01-035 SP card", allowed=par | {"SP"})["variant"] == "SP"
+
+
 def test_expected_code_mismatch():
     assert classify("Nami OP01-016 Alt Art", expected_code="OP05-119") is None
     assert classify("Nami alt art romance dawn", expected_code="OP01-016")["code"] == "OP01-016"
 
 
 if __name__ == "__main__":
-    test_cases(); test_expected_code_mismatch(); print("ok", len(CASES))
+    test_cases(); test_allowed_variants(); test_expected_code_mismatch(); print("ok", len(CASES))
