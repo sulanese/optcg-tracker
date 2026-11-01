@@ -63,9 +63,9 @@ class Ebay:
         self.calls += 1
         return self._send(req)
 
-    # ---- Browse: active fixed-price listings, cheapest first ----
+    # ---- Browse: active fixed-price listings ----
     def active(self, query, limit=200):
-        params = {"q": query, "limit": limit, "sort": "price", "filter": "buyingOptions:{FIXED_PRICE}"}
+        params = {"q": query, "limit": limit, "filter": "buyingOptions:{FIXED_PRICE}"}  # best-match order: real cards rank above cheap junk
         if CATEGORY:
             params["category_ids"] = CATEGORY
         data = self._get("/buy/browse/v1/item_summary/search", params, SCOPE_BASE)

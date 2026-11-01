@@ -52,6 +52,20 @@ def pick(weight, state, n, now):
     return sorted(weight, key=overdue, reverse=True)[:n]
 
 
+def lowest_credible(items):
+    """Cheapest listing that is not suspiciously far below the others.
+
+    Fakes and novelty prints cluster at the bottom of the price list, so with 4+ listings
+    anything under 40% of the median is ignored. A single listing is only trusted if it
+    is the only evidence we have; it is flagged with n=1 on the site.
+    """
+    prices = sorted(i["p"] for i in items)
+    if len(prices) >= 4:
+        floor = 0.4 * prices[len(prices) // 2]
+        items = [i for i in items if i["p"] >= floor]
+    return min(items, key=lambda i: i["p"]) if items else None
+
+
 def existing_keys(month_file):
     keys = set()
     if os.path.exists(month_file):
@@ -83,20 +97,20 @@ def main():
     for i, code in enumerate(codes):
         try:
             # lowest asks per (variant, lang, grade bucket)
-            best = {}
+            groups = {}
             for it in eb.active(code):
                 c = classify(it["title"], expected_code=code)
-                if not c or it["currency"] != "USD":
+                if not c or it["currency"] != "USD" or it["price"] <= 0:
                     continue
                 bucket = "raw" if not c["grader"] else f'{c["grader"]}{c["grade"]:g}'
                 k = f'{code}|{c["variant"]}|{c["lang"]}|{bucket}'
-                total = round(it["price"] + it["ship"], 2)
-                if k not in best or total < best[k]["p"]:
-                    best[k] = {"p": total, "url": it["url"]}
+                groups.setdefault(k, []).append({"p": round(it["price"] + it["ship"], 2), "url": it["url"], "t": it["title"][:120]})
             for k in [k for k in asks if k.startswith(code + "|")]:
                 del asks[k]
-            for k, v in best.items():
-                asks[k] = {**v, "at": now.isoformat(timespec="minutes")}
+            for k, items in groups.items():
+                v = lowest_credible(items)
+                if v:
+                    asks[k] = {**v, "n": len(items), "at": now.isoformat(timespec="minutes")}
 
             sold = eb.sold(code)
             for it in sold or []:
@@ -125,6 +139,7 @@ def main():
     added = 0
     for month, recs in by_month.items():
         path = P("data", "sales", f"{month}.jsonl")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         keys = existing_keys(path)
         with open(path, "a", encoding="utf-8") as f:
             for r in recs:

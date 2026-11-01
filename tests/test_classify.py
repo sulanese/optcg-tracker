@@ -22,6 +22,12 @@ CASES = [
     ("Luffy OP05-119 Simplified Chinese PSA 10", None),
     ("Luffy OP05-119 graded slab", None),
     ("Nami OP01-016 x4 playset", None),
+    ("Shanks OP01-120 Manga Art Card Custom Gold Metal", None),
+    ("Luffy OP05-119 Manga Reproduction Holo", None),
+    ("One Piece Inspired Luffy OP05-119 Sticker", None),
+    ("Luffy OP05-119 Manga Rare Damaged Crease", None),
+    ("Luffy OP05-119 Acrylic Stand", None),
+    ("Monkey D Luffy OP05-119 SEC printed holo English NM", ("OP05-119", "EN", None, None, "Base")),
 ]
 
 

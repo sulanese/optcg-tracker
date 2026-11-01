@@ -23,6 +23,14 @@ JUNK = [
     r"\bplaymat\b", r"\bbinder\b", r"\bdeck box\b", r"\bdigital\b", r"\bcode card\b",
     r"\byou pick\b", r"\bpick your\b", r"\bchoose\b", r"\bselect your\b", r"\bcomplete set\b", r"\bmaster set\b",
     r"\bempty\b", r"\bslab only\b", r"\bpsa label\b",
+    # fakes, novelty and non-card items
+    r"\breproduction\b", r"\brepro\b", r"\bre-?print\s?(card|art)\b", r"\bart\s?card\b", r"\bfan\s?art\b",
+    r"\binspired\b", r"\bunofficial\b", r"\bnot official\b", r"\bnon[- ]?official\b", r"\bhandmade\b", r"\bhomemade\b",
+    r"\bsticker\b", r"\bdecal\b", r"\bmetal\s?card\b", r"\bacrylic\b", r"\bposter\b", r"\bkeychain\b", r"\bmagnet\b",
+    r"\bframe(d)?\b", r"\btoken\b", r"\bplay\s?mat\b", r"\bstand\b", r"\bfigure\b", r"\bprint\b(?!ed)", r"\bgift\b",
+    r"\bcosplay\b", r"\bnft\b", r"\btcg\s?pocket\b", r"\bopcg\s?sim\b",
+    # damaged copies are not a fair "lowest ask" for a card
+    r"\bdamaged\b", r"\bheavily played\b", r"\bhp\b", r"\bpoor\b", r"\bcreased?\b", r"\bwater damage\b",
 ]
 OTHER_GRADERS = r"\b(cgc|tag|ace|ags|ars|sgc|gma|hga|mnt|bcc|pca|ksa|mint grading|psg)\s?(\d|gem|pristine|mint|perfect)"
 OTHER_LANGS = r"\b(chinese|simplified|traditional|korean|french|italian|german|spanish|portuguese|thai)\b|中文|简体|繁體|한국"
