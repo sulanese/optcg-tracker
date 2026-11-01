@@ -1,0 +1,47 @@
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "collector"))
+from classify import classify
+
+CASES = [
+    # title, expected (code, lang, grader, grade, variant) or None
+    ("Monkey D Luffy OP05-119 Manga Rare SEC Awakening of the New Era English PSA 10", ("OP05-119", "EN", "PSA", 10.0, "Manga")),
+    ("PSA 10 GEM MINT Monkey.D.Luffy OP05-119 Japanese Manga Parallel", ("OP05-119", "JP", "PSA", 10.0, "Manga")),
+    ("One Piece Card Game Nami OP01-016 Alt Art Romance Dawn NM", ("OP01-016", "EN", None, None, "Alt Art")),
+    ("Nami OP01-016 Parallel JP Japanese Romance Dawn", ("OP01-016", "JP", None, None, "Alt Art")),
+    ("Boa Hancock EB03-061 SP Heroines Edition English BGS 9.5", ("EB03-061", "EN", "BGS", 9.5, "SP")),
+    ("Shanks OP01-120 SEC Beckett Black Label 10 Pristine", ("OP01-120", "EN", "BGS", 10.0, "Base")),
+    ("Shanks OP01-120 Alternate Art Secret Rare", ("OP01-120", "EN", None, None, "Alt Art")),
+    ("Zoro OP 01-001 leader one piece", ("OP01-001", "EN", None, None, "Base")),
+    ("Uta P-062 promo japanese", ("P-062", "JP", None, None, "Base")),
+    # excluded
+    ("Luffy OP05-119 CGC 10 Pristine", None),
+    ("Luffy OP05-119 TAG 10", None),
+    ("One Piece OP05 lot of 50 cards OP05-119 OP05-118", None),
+    ("Luffy OP05-119 Manga Proxy Custom Orica", None),
+    ("OP-05 Awakening of the New Era Booster Box Sealed Japanese", None),
+    ("Luffy OP05-119 Simplified Chinese PSA 10", None),
+    ("Luffy OP05-119 graded slab", None),
+    ("Nami OP01-016 x4 playset", None),
+]
+
+
+def test_cases():
+    bad = []
+    for title, want in CASES:
+        got = classify(title)
+        if want is None:
+            if got is not None:
+                bad.append((title, got))
+            continue
+        if got is None or (got["code"], got["lang"], got["grader"], got["grade"], got["variant"]) != want:
+            bad.append((title, got, want))
+    assert not bad, "\n".join(map(str, bad))
+
+
+def test_expected_code_mismatch():
+    assert classify("Nami OP01-016 Alt Art", expected_code="OP05-119") is None
+    assert classify("Nami alt art romance dawn", expected_code="OP01-016")["code"] == "OP01-016"
+
+
+if __name__ == "__main__":
+    test_cases(); test_expected_code_mismatch(); print("ok", len(CASES))

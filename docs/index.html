@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OPTCG Market Tracker</title>
+<meta name="referrer" content="no-referrer">
+<style>
+/* Layout: status tiles → filter row → ranked table + side rail; click a row for its sale history. Dark trading-terminal look. */
+:root{--bg:#0d1117;--panel:#161b22;--head:#11161d;--line:#262d36;--ink:#e6edf3;--ink2:#9aa6b2;--mute:#6b7682;--up:#3fb950;--dn:#f85149;--acc:#d29922;--chip:#21262d;--hover:#1c232c;--pink:#f0a6ca;color-scheme:dark;
+--ui:Inter,"Segoe UI",system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:13px/1.35 var(--ui);padding:20px max(16px,env(safe-area-inset-right,0px)) 28px max(16px,env(safe-area-inset-left,0px))}
+a{color:var(--ink)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:20px;margin:0}h1 span{color:var(--acc)}
+.meta{color:var(--ink2);font-size:12px}
+.banner{background:#2a2108;border:1px solid #6b4f12;color:#e8c46a;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12.5px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:12px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;min-width:0}
+.tile .k{color:var(--ink2);font-size:11px;text-transform:uppercase;letter-spacing:.6px}.tile .v{font-size:20px;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums}.tile .s{font-size:11px;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.filters{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.filters label{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 4px 4px 10px;color:var(--ink2);font-size:12px}
+.filters label.chk{padding:6px 10px}
+select,input{background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:4px 6px;font:12px var(--ui)}
+input[type=search]{width:210px;max-width:50vw}
+select:focus,input:focus,th:focus-visible,button:focus-visible,tr:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.count{color:var(--mute);font-size:12px;margin-left:auto}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:12px}
+@media (max-width:1100px){.wrap{grid-template-columns:minmax(0,1fr)}}
+.tablebox{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse}
+th{text-align:right;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink2);font-weight:600;padding:9px 7px;border-bottom:1px solid var(--line);background:var(--head);white-space:nowrap;cursor:pointer;user-select:none}
+th.l,td.l{text-align:left}th .arr{color:var(--acc)}
+td{text-align:right;padding:7px;border-bottom:1px solid var(--line);white-space:nowrap;font-variant-numeric:tabular-nums}
+tbody tr{cursor:pointer}tbody tr:hover td{background:var(--hover)}
+.card b{display:inline-block;font-weight:600;cursor:zoom-in;border-bottom:1px dotted var(--mute)}.card small{display:block;color:var(--mute);font-size:11px}
+.lang{font-size:10px;font-weight:700;padding:2px 5px;border-radius:3px;background:var(--chip);color:var(--ink2)}
+.up{color:var(--up)}.dn{color:var(--dn)}.mute{color:var(--mute);font-size:11px}.na{color:var(--mute)}
+.tag{font-size:10px;padding:2px 6px;border-radius:10px;background:var(--chip);color:var(--ink2);margin-left:3px}.tag.w{color:var(--pink)}
+.pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;padding:10px;color:var(--ink2);font-size:12px}
+button{background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 11px;font:12px var(--ui);cursor:pointer}button:disabled{opacity:.4;cursor:default}
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.box h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink2)}
+.src{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dashed var(--line);font-size:12px}.src:last-child{border:0}
+.src i{font-style:normal;color:var(--mute);font-size:11px;text-align:right;white-space:nowrap}
+.on{color:var(--up)}.off{color:var(--acc)}
+.foot{margin-top:10px;color:var(--mute);font-size:11px;max-width:900px}
+#pv{position:fixed;z-index:50;pointer-events:none;width:250px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px;box-shadow:0 12px 40px rgba(0,0,0,.6);opacity:0;transition:opacity .12s}
+#pv.show{opacity:1}
+#pv .img{aspect-ratio:600/838;width:100%;border-radius:6px;background:var(--chip);display:grid;place-items:center;overflow:hidden;color:var(--mute);font-size:11px;text-align:center}
+#pv img{width:100%;height:100%;object-fit:cover;display:block}
+#pv .cap{margin-top:7px;font-size:12px}#pv .cap b{display:block}#pv .cap span{color:var(--mute);font-size:11px}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100vw);background:var(--panel);border-left:1px solid var(--line);z-index:60;transform:translateX(100%);transition:transform .18s;display:flex;flex-direction:column;padding:16px max(16px,env(safe-area-inset-right,0px)) 16px 16px}
+#drawer.open{transform:none}
+#drawer header{display:flex;gap:12px;align-items:flex-start}
+#drawer header img{width:96px;border-radius:5px;background:var(--chip)}
+#drawer h2{font-size:16px;margin:0 0 4px}
+#drawer .list{overflow:auto;margin-top:12px;border-top:1px solid var(--line)}
+#drawer .sale{display:grid;grid-template-columns:92px 1fr auto;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;font-size:12px}
+#drawer .kv{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-top:10px;font-size:12px}
+#drawer .kv span{color:var(--mute)}
+#close{margin-left:auto}
+@media (prefers-reduced-motion:reduce){#pv,#drawer{transition:none}}
+</style></head><body>
+<div class="top"><h1>OPTCG <span>Market</span> Tracker</h1><div class="meta" id="meta">Loading…</div></div>
+<div class="banner" id="banner" hidden></div>
+
+<div class="tiles">
+<div class="tile"><div class="k">Sales recorded</div><div class="v" id="t1">–</div><div class="s" id="t1s">–</div></div>
+<div class="tile"><div class="k">Cards with data</div><div class="v" id="t2">–</div><div class="s" id="t2s">of 2,850 card codes</div></div>
+<div class="tile"><div class="k">Sales (30D)</div><div class="v" id="t3">–</div><div class="s">all tracked cards</div></div>
+<div class="tile"><div class="k">Biggest mover (7D)</div><div class="v" id="t4">–</div><div class="s" id="t4s">needs 2+ sales each week</div></div>
+<div class="tile"><div class="k">Last update</div><div class="v" id="t5">–</div><div class="s" id="t5s">–</div></div>
+</div>
+
+<div class="filters">
+<label for="fLang">Language <select id="fLang"><option value="">EN + JP</option><option>EN</option><option>JP</option></select></label>
+<label for="fSet">Set <select id="fSet"><option value="">All</option></select></label>
+<label for="fVar">Variant <select id="fVar"><option value="">All</option><option>Base</option><option>Alt Art</option><option>Manga</option><option>SP</option><option>Treasure</option><option>Gold</option><option>Pre-Release</option></select></label>
+<label for="fTag">Tag <select id="fTag"><option value="">Any</option><option>Waifu</option><option>Promo</option></select></label>
+<label for="fMin">Min price <select id="fMin"><option value="0">Any</option><option value="5">$5+</option><option value="50">$50+</option><option value="250">$250+</option><option value="1000">$1,000+</option></select></label>
+<label class="chk" for="fData"><input type="checkbox" id="fData" checked> Only cards with data</label>
+<label for="q">Search <input id="q" type="search" placeholder="Name or code, e.g. OP05-119"></label>
+<span class="count" id="count"></span>
+</div>
+
+<div class="wrap">
+<div style="min-width:0">
+<div class="tablebox"><table><thead><tr id="hdr"></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="pager"><button id="prev">Prev</button><span id="pg"></span><button id="next">Next</button></div>
+</div>
+<div class="side">
+<div class="box"><h3>Data sources</h3>
+<div class="src"><span>eBay sold listings</span><i id="sIns">–</i></div>
+<div class="src"><span>eBay lowest asks</span><i id="sAsk">–</i></div>
+<div class="src"><span>SNKRDUNK / Mercari / Yahoo JP</span><i>manual entry</i></div>
+<div class="src"><span>PSA &amp; Beckett pop</span><i>manual entry</i></div>
+<div class="src"><span style="color:var(--mute);text-decoration:line-through">CGC</span><i>excluded</i></div>
+</div>
+<div class="box"><h3>Set release dates</h3><div id="sets"></div></div>
+</div>
+</div>
+<div class="foot">Prices in USD; JPY sales converted at the daily rate. "Last sold", 52W low/high and Δ 7D use ungraded sales; obvious mislabels (below ¼ or above 4× the yearly median) are left out of the 52W range. Sold history builds from the day collection starts: eBay shares the last 90 days. Hover a card name to preview it; click a row for its sales.</div>
+
+<div id="pv" aria-hidden="true"><div class="img" id="pvImg"></div><div class="cap" id="pvCap"></div></div>
+<aside id="drawer" aria-label="Sale history"><header><img id="dImg" alt=""><div><h2 id="dName"></h2><div class="mute" id="dSub"></div></div><button id="close">Close</button></header><div class="kv" id="dKv"></div><div class="list" id="dList"></div></aside>
+
+<script>
+const $=id=>document.getElementById(id);
+const usd=v=>v==null?'<span class="na">–</span>':v>=1000?"$"+Math.round(v).toLocaleString():v>=10?"$"+v.toFixed(0):"$"+v.toFixed(2);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function ago(iso){if(!iso)return"";const m=(Date.now()-Date.parse(iso.length<=16?iso+":00Z":iso))/6e4;return m<60?Math.max(1,Math.round(m))+"m ago":m<2880?Math.round(m/60)+"h ago":Math.round(m/1440)+"d ago"}
+const img=(pid,lang)=>{const en=`https://en.onepiece-cardgame.com/images/cardlist/card/${pid}.png`,jp=`https://www.onepiece-cardgame.com/images/cardlist/card/${pid}.png`;return lang==="JP"?[jp,en]:[en,jp]};
+function setImg(el,urls){let i=0;el.onerror=()=>{i++;if(i<urls.length)el.src=urls[i];else el.onerror=null};el.src=urls[0]}
+
+let CAT={},SETS=[],ROWS=[],sortK="raw30",sortD=-1,page=0;const PER=50;
+const COLS=[{k:"rank",h:"#"},{k:"name",h:"Card",l:1},{k:"set",h:"Set",l:1},{k:"lang",h:"Lang"},{k:"last",h:"Last sold"},{k:"d7",h:"Δ 7D"},{k:"lo",h:"52W low"},{k:"hi",h:"52W high"},{k:"ask",h:"Raw lowest ask"},{k:"psa10",h:"PSA 10 last"},{k:"psaPop",h:"PSA pop<br><span class='mute'>10 / total</span>"},{k:"bgsPop",h:"BGS pop<br><span class='mute'>10 / total</span>"},{k:"raw30",h:"Sales 30D"},{k:"gem",h:"Gem rate"},{k:"tags",h:"Tags",l:1}];
+const val=(r,k)=>({name:r.name,set:r.set,lang:r.lang,last:r.last?.p,d7:r.d7,lo:r.lo,hi:r.hi,ask:r.ask?.p,psa10:r.psa10?.p,psaPop:r.pop?.PSA?.[0],bgsPop:r.pop?.BGS?.[0],raw30:r.sales30,gem:r.gem,tags:r.tags.length,rank:r.sales30})[k];
+
+async function load(){
+  const [c,s]=await Promise.all([fetch("data/catalogue.json").then(r=>r.json()),fetch("data/summary.json",{cache:"no-cache"}).then(r=>r.json())]);
+  CAT=c.cards;SETS=c.sets;
+  const have=new Set(s.rows.map(r=>r.code+"|"+r.variant+"|"+r.lang));
+  ROWS=s.rows.map(r=>({...r,...meta(r.code),hasData:true}));
+  for(const code in CAT)for(const lang of["EN","JP"])if(!have.has(code+"|Base|"+lang))ROWS.push({code,variant:"Base",lang,...meta(code),hasData:false,sales30:0,pop:{},recent:[]});
+  status(s);filters();render();
+}
+function meta(code){const c=CAT[code]||{};return{name:c.name||code,set:c.set||"",rarity:c.rarity||"",tags:c.tags||[]}}
+function status(s){
+  const lr=s.last_run;const withData=new Set(s.rows.filter(r=>r.recent.length||r.ask).map(r=>r.code)).size;
+  $("meta").textContent=`EN + JP · PSA & BGS only · USD · ¥${Math.round(s.jpy_per_usd)}/$ · updated ${new Date(s.updated).toLocaleString()}`;
+  $("t1").textContent=s.sales_total.toLocaleString();$("t1s").textContent=s.since?"since "+s.since.slice(0,10):"none yet";
+  $("t2").textContent=withData.toLocaleString();
+  $("t3").textContent=s.rows.reduce((a,r)=>a+r.sales30,0).toLocaleString();
+  const mv=s.rows.filter(r=>r.d7!=null&&r.raw30>=4).sort((a,b)=>Math.abs(b.d7)-Math.abs(a.d7))[0];
+  if(mv){$("t4").innerHTML=`<span class="${mv.d7>=0?'up':'dn'}">${mv.d7>=0?'▲':'▼'} ${Math.abs(mv.d7)}%</span>`;$("t4s").textContent=`${meta(mv.code).name} · ${mv.code} · ${mv.variant} · ${mv.lang}`}
+  $("t5").textContent=lr?ago(lr.at):"never";$("t5s").textContent=lr?`${lr.cards} cards checked, ${lr.new_sales} new sales`:"waiting for first run";
+  $("sIns").innerHTML=lr?.insights?'<span class="on">live</span>':lr?'<span class="off">awaiting eBay approval</span>':"not started";
+  $("sAsk").innerHTML=lr?'<span class="on">live</span>':"not started";
+  if(!lr){$("banner").hidden=false;$("banner").textContent="No data collected yet. Once your eBay keys are added to GitHub, the first run fills this table within a few hours. Untick “Only cards with data” to browse the full catalogue."}
+  else if(!lr.insights){$("banner").hidden=false;$("banner").textContent="eBay has not approved sold-data access for this app yet, so only lowest asks (and any sales you enter by hand) are showing. Sold prices start appearing automatically once eBay approves Marketplace Insights."}
+  $("sets").innerHTML=SETS.filter(x=>x.set_code&&x.set_code.match(/^(OP|EB|PRB)/)).reverse().map(x=>`<div class="src"><span>${esc(x.set_code)} ${esc(x.name_en)}</span><i>JP ${x.jp_release}<br>EN ${x.en_release}</i></div>`).join("");
+}
+function filters(){
+  const order=SETS.map(s=>s.set_code);
+  [...new Set(ROWS.map(r=>r.set))].sort((a,b)=>{const i=order.indexOf(a),j=order.indexOf(b);return(i<0?999:i)-(j<0?999:j)||a.localeCompare(b,undefined,{numeric:true})}).forEach(s=>$("fSet").insertAdjacentHTML("beforeend",`<option>${esc(s)}</option>`));
+  ["fLang","fSet","fVar","fTag","fMin","fData"].forEach(id=>$(id).addEventListener("change",()=>{page=0;render()}));
+  $("q").addEventListener("input",()=>{page=0;render()});
+  $("prev").onclick=()=>{page--;render()};$("next").onclick=()=>{page++;render()};
+  const sortBy=k=>{if(sortK===k)sortD*=-1;else{sortK=k;sortD=["name","set","lang","tags"].includes(k)?1:-1}page=0;render()};
+  $("hdr").addEventListener("click",e=>{const th=e.target.closest("th");if(th)sortBy(th.dataset.k)});
+  $("hdr").addEventListener("keydown",e=>{const th=e.target.closest("th");if(th&&(e.key==="Enter"||e.key===" ")){e.preventDefault();sortBy(th.dataset.k)}});
+}
+function list(){
+  const L=$("fLang").value,S=$("fSet").value,V=$("fVar").value,T=$("fTag").value,M=+$("fMin").value,D=$("fData").checked,q=$("q").value.trim().toLowerCase();
+  const r=ROWS.filter(x=>(!D||x.hasData)&&(!L||x.lang===L)&&(!S||x.set===S)&&(!V||x.variant===V)&&(!T||x.tags.includes(T))&&(!M||((x.last?.p??x.ask?.p??0)>=M))&&(!q||x.name.toLowerCase().includes(q)||x.code.toLowerCase().includes(q)));
+  r.sort((a,b)=>{const A=val(a,sortK),B=val(b,sortK);if(A==null&&B==null)return 0;if(A==null)return 1;if(B==null)return -1;return(A>B?1:A<B?-1:0)*sortD});
+  return r;
+}
+function render(){
+  $("hdr").innerHTML=COLS.map(c=>`<th tabindex="0" data-k="${c.k}" class="${c.l?'l':''}">${c.h}${sortK===c.k?` <span class="arr">${sortD<0?'↓':'↑'}</span>`:''}</th>`).join("");
+  const r=list(),pages=Math.max(1,Math.ceil(r.length/PER));page=Math.min(page,pages-1);
+  $("count").textContent=r.length.toLocaleString()+" rows";
+  $("rows").innerHTML=r.slice(page*PER,page*PER+PER).map((x,i)=>{const idx=ROWS.indexOf(x);const p=x.pop||{};
+    return `<tr data-i="${idx}" tabindex="0"><td>${page*PER+i+1}</td>
+<td class="l card"><b data-i="${idx}">${esc(x.name)}</b><small>${x.code} · ${esc(x.rarity)}${x.variant!=="Base"?" · "+x.variant:""}</small></td>
+<td class="l">${esc(x.set)}</td><td><span class="lang">${x.lang}</span></td>
+<td>${x.last?`${usd(x.last.p)}<br><span class="mute">${ago(x.last.at)} · ${esc(x.last.src)}</span>`:usd(null)}</td>
+<td class="${x.d7==null?'na':x.d7>=0?'up':'dn'}">${x.d7==null?'–':(x.d7>=0?'▲ ':'▼ ')+Math.abs(x.d7).toFixed(1)+'%'}</td>
+<td>${usd(x.lo)}</td><td>${usd(x.hi)}</td>
+<td>${x.ask?`<a href="${esc(x.ask.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${usd(x.ask.p)}</a>`:usd(null)}</td>
+<td>${usd(x.psa10?.p)}</td>
+<td>${p.PSA?p.PSA[0].toLocaleString()+" / "+p.PSA[1].toLocaleString():'<span class="na">–</span>'}</td>
+<td>${p.BGS?p.BGS[0]+" / "+p.BGS[1]:'<span class="na">–</span>'}</td>
+<td>${x.sales30||'<span class="na">0</span>'}</td><td>${x.gem!=null?x.gem+'%':'<span class="na">–</span>'}</td>
+<td class="l">${x.tags.map(t=>`<span class="tag ${t==='Waifu'?'w':''}">${t}</span>`).join("")}</td></tr>`}).join("");
+  $("pg").textContent=`Page ${page+1} of ${pages}`;$("prev").disabled=page===0;$("next").disabled=page>=pages-1;
+}
+// hover preview
+const pv=$("pv");let cur=-1;
+function pid(x){const c=CAT[x.code]||{};return(c.img||{})[x.variant]||(c.img||{}).Base||x.code}
+function show(i,X,Y){const x=ROWS[i];if(cur!==i){cur=i;const im=new Image();im.alt=x.name;setImg(im,img(pid(x),x.lang));$("pvImg").replaceChildren(im);$("pvCap").innerHTML=`<b>${esc(x.name)}</b><span>${x.code} · ${x.variant} · ${esc(x.set)} · ${x.lang}</span>`}place(X,Y);pv.classList.add("show")}
+function place(X,Y){const w=pv.offsetWidth,h=pv.offsetHeight;let L=X+18,T=Y-h/2;if(L+w>innerWidth-8)L=X-w-18;T=Math.max(8,Math.min(T,innerHeight-h-8));pv.style.left=L+"px";pv.style.top=T+"px"}
+$("rows").addEventListener("mouseover",e=>{const b=e.target.closest(".card b");if(b)show(+b.dataset.i,e.clientX,e.clientY)});
+$("rows").addEventListener("mousemove",e=>{if(e.target.closest(".card b"))place(e.clientX,e.clientY)});
+$("rows").addEventListener("mouseout",e=>{if(e.target.closest(".card b"))pv.classList.remove("show")});
+// drawer
+function open(i){const x=ROWS[i];pv.classList.remove("show");setImg($("dImg"),img(pid(x),x.lang));$("dName").textContent=x.name;$("dSub").textContent=`${x.code} · ${x.rarity} · ${x.variant} · ${x.set} · ${x.lang}`;
+  const p=x.pop||{};
+  $("dKv").innerHTML=`<div><span>Last sold</span><br>${usd(x.last?.p)}</div><div><span>Raw lowest ask</span><br>${usd(x.ask?.p)}</div><div><span>52W range</span><br>${usd(x.lo)} – ${usd(x.hi)}</div><div><span>PSA 10 lowest ask</span><br>${usd(x.psa10ask?.p)}</div><div><span>PSA pop</span><br>${p.PSA?p.PSA.join(" / "):"–"}</div><div><span>BGS pop (Black Label)</span><br>${p.BGS?`${p.BGS[0]} / ${p.BGS[1]} (${p.BGS[2]})`:"–"}</div>`;
+  $("dList").innerHTML=x.recent.length?x.recent.map(s=>`<div class="sale"><span class="mute">${s[0].slice(0,10)}</span><span>${esc(s[2])} · ${s[4]?`<a href="${esc(s[4])}" target="_blank" rel="noopener">${esc(s[3])}</a>`:esc(s[3])}</span><b>${usd(s[1])}</b></div>`).join(""):'<p class="mute">No sales recorded yet.</p>';
+  $("drawer").classList.add("open");$("close").focus()}
+$("rows").addEventListener("click",e=>{const tr=e.target.closest("tr");if(tr)open(+tr.dataset.i)});
+$("rows").addEventListener("keydown",e=>{const tr=e.target.closest("tr");if(tr&&e.key==="Enter")open(+tr.dataset.i)});
+$("close").onclick=()=>$("drawer").classList.remove("open");
+addEventListener("keydown",e=>{if(e.key==="Escape")$("drawer").classList.remove("open")});
+load().catch(e=>{$("meta").textContent="Could not load data: "+e.message});
+</script>
+</body></html>
