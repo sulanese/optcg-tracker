@@ -72,8 +72,8 @@ def build_catalogue():
         if v == "Base":
             c["set"], c["rarity"] = r["set_code"], r["rarity"]
             c["img"]["Base"] = r["printing_id"]
-        elif v == "SP":
-            c["img"]["SP"] = r["printing_id"]
+        elif v in ("SP", "Treasure"):
+            c["img"].setdefault(v, r["printing_id"])
         elif v.startswith("Parallel"):
             n = int(v.split()[1])
             c.setdefault("_par", []).append((n, r["printing_id"]))
@@ -82,7 +82,8 @@ def build_catalogue():
         if par:
             c["img"]["Alt Art"] = par[0][1]
             c["img"]["Manga"] = par[-1][1]          # best guess until set in variant_images.csv
-            c["img"]["Gold"] = c["img"]["Treasure"] = par[-1][1]
+            c["img"]["Gold"] = par[-1][1]
+            c["img"].setdefault("Treasure", par[-1][1])
         for (oc, ov), pid in img_over.items():
             if oc == code:
                 c["img"][ov] = pid

@@ -46,8 +46,8 @@ def catalogue_codes():
             a = allowed.setdefault(code, {"Base", "Pre-Release"})
             if r["variant"].startswith(("Parallel", "Reprint")):
                 a.update({"Alt Art", "Manga", "Gold", "Treasure"})
-            if r["variant"] == "SP":
-                a.add("SP")
+            if r["variant"] in ("SP", "Treasure"):
+                a.add(r["variant"])
     return weight, allowed
 
 

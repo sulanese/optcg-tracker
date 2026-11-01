@@ -113,12 +113,13 @@ const img=(pid,lang)=>{const en=`https://en.onepiece-cardgame.com/images/cardlis
 function setImg(el,urls){let i=0;el.onerror=()=>{i++;if(i<urls.length)el.src=urls[i];else el.onerror=null};el.src=urls[0]}
 
 let CAT={},SETS=[],ROWS=[],sortK="raw30",sortD=-1,page=0;const PER=50;
-const COLS=[{k:"rank",h:"#"},{k:"name",h:"Card",l:1},{k:"set",h:"Set",l:1},{k:"lang",h:"Lang"},{k:"last",h:"Last sold"},{k:"d7",h:"Δ 7D"},{k:"lo",h:"52W low"},{k:"hi",h:"52W high"},{k:"ask",h:"Raw lowest ask"},{k:"psa10",h:"PSA 10 last"},{k:"psaPop",h:"PSA pop<br><span class='mute'>10 / total</span>"},{k:"bgsPop",h:"BGS pop<br><span class='mute'>10 / total</span>"},{k:"raw30",h:"Sales 30D"},{k:"gem",h:"Gem rate"},{k:"tags",h:"Tags",l:1}];
-const val=(r,k)=>({name:r.name,set:r.set,lang:r.lang,last:r.last?.p,d7:r.d7,lo:r.lo,hi:r.hi,ask:r.ask?.p,psa10:r.psa10?.p,psaPop:r.pop?.PSA?.[0],bgsPop:r.pop?.BGS?.[0],raw30:r.sales30,gem:r.gem,tags:r.tags.length,rank:r.sales30})[k];
+const COLS=[{k:"rank",h:"#"},{k:"name",h:"Card",l:1},{k:"set",h:"Set",l:1},{k:"lang",h:"Lang"},{k:"last",h:"Last sold"},{k:"d7",h:"Δ 7D"},{k:"lo",h:"52W low"},{k:"hi",h:"52W high"},{k:"ask",h:"Raw lowest ask"},{k:"psa10",h:"PSA 10 last"},{k:"psa10ask",h:"PSA 10 lowest ask"},{k:"psaPop",h:"PSA pop<br><span class='mute'>10 / total</span>"},{k:"bgsPop",h:"BGS pop<br><span class='mute'>10 / total</span>"},{k:"raw30",h:"Sales 30D"},{k:"gem",h:"Gem rate"},{k:"tags",h:"Tags",l:1}];
+const val=(r,k)=>({name:r.name,set:r.set,lang:r.lang,last:r.last?.p,d7:r.d7,lo:r.lo,hi:r.hi,ask:r.ask?.p,psa10:r.psa10?.p,psa10ask:r.psa10ask?.p,psaPop:r.pop?.PSA?.[0],bgsPop:r.pop?.BGS?.[0],raw30:r.sales30,gem:r.gem,tags:r.tags.length,rank:r.sales30})[k];
 
 async function load(){
   const [c,s]=await Promise.all([fetch("data/catalogue.json").then(r=>r.json()),fetch("data/summary.json",{cache:"no-cache"}).then(r=>r.json())]);
   CAT=c.cards;SETS=c.sets;
+  if(!s.sales_total){sortK="ask";sortD=-1}   // no sold data yet: rank by price instead of sales
   const have=new Set(s.rows.map(r=>r.code+"|"+r.variant+"|"+r.lang));
   ROWS=s.rows.map(r=>({...r,...meta(r.code),hasData:true}));
   for(const code in CAT)for(const lang of["EN","JP"])if(!have.has(code+"|Base|"+lang))ROWS.push({code,variant:"Base",lang,...meta(code),hasData:false,sales30:0,pop:{},recent:[]});
@@ -169,6 +170,7 @@ function render(){
 <td>${usd(x.lo)}</td><td>${usd(x.hi)}</td>
 <td>${x.ask?`<a href="${esc(x.ask.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${usd(x.ask.p)}</a>`:usd(null)}</td>
 <td>${usd(x.psa10?.p)}</td>
+<td>${x.psa10ask?`<a href="${esc(x.psa10ask.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${usd(x.psa10ask.p)}</a>`:usd(null)}</td>
 <td>${p.PSA?p.PSA[0].toLocaleString()+" / "+p.PSA[1].toLocaleString():'<span class="na">–</span>'}</td>
 <td>${p.BGS?p.BGS[0]+" / "+p.BGS[1]:'<span class="na">–</span>'}</td>
 <td>${x.sales30||'<span class="na">0</span>'}</td><td>${x.gem!=null?x.gem+'%':'<span class="na">–</span>'}</td>
