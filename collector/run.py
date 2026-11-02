@@ -15,7 +15,7 @@ import summarize
 
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 P = lambda *a: os.path.join(ROOT, *a)
-CARDS_PER_RUN = int(os.environ.get("CARDS_PER_RUN", "450"))   # 2 calls per card; 4 runs/day stays under eBay's 5,000/day Browse limit
+CARDS_PER_RUN = int(os.environ.get("CARDS_PER_RUN", "150"))   # 1 Browse call per card; 24 runs/day = 3,600 calls, under eBay's 5,000/day limit
 HIGH = {"SEC", "SP", "L", "SR", "P", "TR"}
 
 

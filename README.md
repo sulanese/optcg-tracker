@@ -1,7 +1,7 @@
 # OPTCG Market Tracker
 
 A personal price tracker for One Piece Card Game singles (English and Japanese).
-It is a free website on GitHub Pages, updated by a GitHub Actions job every 6 hours.
+It is a free website on GitHub Pages, updated by a GitHub Actions job every hour.
 
 | Column | Where it comes from |
 |---|---|
@@ -21,11 +21,11 @@ Card names, codes, rarities, sets and images come from the official Bandai card 
 3. **GitHub repo.** Create a free **public** repo (e.g. `optcg-tracker`) and upload everything in this folder.
 4. **Secrets.** In the repo go to *Settings → Secrets and variables → Actions → New repository secret* and add `EBAY_CLIENT_ID` and `EBAY_CLIENT_SECRET`.
 5. **Website.** Go to *Settings → Pages*, then under *Build and deployment* choose *Deploy from a branch*, `main`, folder `/docs`. Your link will be `https://<your-username>.github.io/optcg-tracker/`.
-6. **First run.** Go to *Actions → Collect prices → Run workflow*. After that it runs every 6 hours on its own.
+6. **First run.** Go to *Actions → Collect prices → Run workflow*. After that it runs every hour on its own.
 
 ## How collection works
 
-- Each run checks about 450 card codes (2 eBay calls each), most overdue first. Chase cards (SEC, SP, Leaders, SR, promos, anything with an alt art) get checked 3× as often as commons. That keeps you under eBay's default 5,000 calls/day.
+- Each run checks about 150 card codes, most overdue first. Chase cards (SEC, SP, Leaders, SR, promos, anything with an alt art) get checked 3× as often as commons. That is about 3,600 Browse calls a day, under eBay's default 5,000.
 - Listing titles are read by `collector/classify.py`. It works out language (EN/JP), grade (PSA or BGS only), and variant (Base, Alt Art, Manga, SP, Treasure, Gold, Pre-Release). It drops lots, proxies, sealed product, CGC/TAG/other graders, and non-EN/JP languages.
 - eBay only shares the **last 90 days** of sold items, so the 52-week range fills in over time as data accumulates. Older history can be added by hand (below).
 - Sales are stored forever in `data/sales/YYYY-MM.jsonl`, so the history is yours.

@@ -66,7 +66,7 @@ button{background:var(--chip);color:var(--ink);border:1px solid var(--line);bord
 
 <div class="tiles">
 <div class="tile"><div class="k">Sales recorded</div><div class="v" id="t1">–</div><div class="s" id="t1s">–</div></div>
-<div class="tile"><div class="k">Cards with data</div><div class="v" id="t2">–</div><div class="s" id="t2s">of 2,850 card codes</div></div>
+<div class="tile"><div class="k">Cards with data</div><div class="v" id="t2">–</div><div class="s" id="t2s">–</div></div>
 <div class="tile"><div class="k">Sales (30D)</div><div class="v" id="t3">–</div><div class="s">all tracked cards</div></div>
 <div class="tile"><div class="k">Biggest mover (7D)</div><div class="v" id="t4">–</div><div class="s" id="t4s">needs 2+ sales each week</div></div>
 <div class="tile"><div class="k">Last update</div><div class="v" id="t5">–</div><div class="s" id="t5s">–</div></div>
@@ -130,7 +130,7 @@ function status(s){
   const lr=s.last_run;const withData=new Set(s.rows.filter(r=>r.recent.length||r.ask).map(r=>r.code)).size;
   $("meta").textContent=`EN + JP · PSA & BGS only · USD · ¥${Math.round(s.jpy_per_usd)}/$ · updated ${new Date(s.updated).toLocaleString()}`;
   $("t1").textContent=s.sales_total.toLocaleString();$("t1s").textContent=s.since?"since "+s.since.slice(0,10):"none yet";
-  $("t2").textContent=withData.toLocaleString();
+  $("t2").textContent=withData.toLocaleString();$("t2s").textContent="of "+Object.keys(CAT).length.toLocaleString()+" card codes";
   $("t3").textContent=s.rows.reduce((a,r)=>a+r.sales30,0).toLocaleString();
   const mv=s.rows.filter(r=>r.d7!=null&&r.raw30>=4).sort((a,b)=>Math.abs(b.d7)-Math.abs(a.d7))[0];
   if(mv){$("t4").innerHTML=`<span class="${mv.d7>=0?'up':'dn'}">${mv.d7>=0?'▲':'▼'} ${Math.abs(mv.d7)}%</span>`;$("t4s").textContent=`${meta(mv.code).name} · ${mv.code} · ${mv.variant} · ${mv.lang}`}

@@ -2,7 +2,7 @@ name: Collect prices
 
 on:
   schedule:
-    - cron: "17 */6 * * *"
+    - cron: "23 * * * *"     # every hour (GitHub sometimes skips scheduled runs; small hourly batches lose less)
   workflow_dispatch:
   push:
     paths:
